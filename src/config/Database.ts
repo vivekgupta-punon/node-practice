@@ -1,15 +1,16 @@
 import { DataSource } from "typeorm";
 import User from "../models/UserModel";
+import Authentication from "../models/AuthModel";
 
 const AppDataSource:DataSource = new DataSource({
     type        : "mysql",
-    host        : "localhost",
+    host        : process.env.DB_HOST || "localhost",
     port        : 3306,
-    username    : "root",
-    password    : "",
-    database    : "practice",
+    username    : process.env.DB_USER || "root",
+    password    : process.env.DB_PASS || "",
+    database    : process.env.DB_NAME || "practice",
     // logging : true,
-    entities    : [User],
+    entities    : [User, Authentication],
     synchronize : true
 });
 
