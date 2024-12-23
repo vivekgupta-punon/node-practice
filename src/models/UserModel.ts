@@ -6,8 +6,8 @@ export class UserEnum
     static STATUS_INACTIVE  = 0;
 
     static statuses = {
-        STATUS_ACTIVE   : "Active",
-        STATUS_INACTIVE : "Inactive"
+        [UserEnum.STATUS_ACTIVE]   : "Active",
+        [UserEnum.STATUS_INACTIVE] : "Inactive"
     }
 
     static ROLE_ADMIN       = 1;
@@ -24,13 +24,13 @@ export class UserEnum
 
 
     static roles = {
-        ROLE_ADMIN      : "Admin",
-        ROLE_USER       : "User",
-        ROLE_MANAGER    : "Manager",
-        ROLE_DEVELOPER  : "Developer",
-        ROLE_TESTER     : "Tester",
-        ROLE_DESIGNER   : "Designer",
-        ROLE_MARKETING  : "Marketing"
+        [UserEnum.ROLE_ADMIN]      : "Admin",
+        [UserEnum.ROLE_USER]       : "User",
+        [UserEnum.ROLE_MANAGER]    : "Manager",
+        [UserEnum.ROLE_DEVELOPER]  : "Developer",
+        [UserEnum.ROLE_TESTER]     : "Tester",
+        [UserEnum.ROLE_DESIGNER]   : "Designer",
+        [UserEnum.ROLE_MARKETING]  : "Marketing"
     }
 
     static DEPARTMENT_ADMIN    = 1;
@@ -43,14 +43,14 @@ export class UserEnum
     static DEPARTMENT_SALES    = 8;
 
     static departments = {
-        DEPARTMENT_ADMIN    : "Admin",
-        DEPARTMENT_IT       : "IT",
-        DEPARTMENT_DESIGN   : "Design",
-        DEPARTMENT_MARKET   : "Marketing",
-        DEPARTMENT_HR       : "HR",
-        DEPARTMENT_ACCOUNTS : "Accounts",
-        DEPARTMENT_SUPPORT  : "Support",
-        DEPARTMENT_SALES    : "Sales"
+        [UserEnum.DEPARTMENT_ADMIN]    : "Admin",
+        [UserEnum.DEPARTMENT_IT]       : "IT",
+        [UserEnum.DEPARTMENT_DESIGN]   : "Design",
+        [UserEnum.DEPARTMENT_MARKET]   : "Marketing",
+        [UserEnum.DEPARTMENT_HR]       : "HR",
+        [UserEnum.DEPARTMENT_ACCOUNTS] : "Accounts",
+        [UserEnum.DEPARTMENT_SUPPORT]  : "Support",
+        [UserEnum.DEPARTMENT_SALES]    : "Sales"
     }
 
 }
@@ -66,9 +66,6 @@ export default class User
     first_name: string
 
     @Column()
-    middle_name: string
-
-    @Column()
     last_name: string
 
     @Column({ unique: true })
@@ -80,10 +77,10 @@ export default class User
     @Column()
     password: string
 
-    @Column({ type: "int" })
+    @Column({ type: "int", default: null })
     type:number
 
-    @Column({ type: "int" })
+    @Column({ type: "int", default: UserEnum.ROLE_USER })
     role: number
 
     @Column({ type: "int" })
@@ -95,7 +92,7 @@ export default class User
     @Column({ default: UserEnum.STATUS_ACTIVE })
     status: number
 
-    @Column()
+    @Column({ default: null})
     manager: number
 
     @CreateDateColumn()
@@ -104,9 +101,9 @@ export default class User
     @UpdateDateColumn()
     updated_at: Date
 
-    @Column()
+    @Column({ default: null})
     created_by: number
 
-    @Column()
+    @Column({ default: null})
     updated_by: number
 }

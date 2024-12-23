@@ -15,14 +15,14 @@ export class TaskEnum
     }
 
     static STATUS_PENDING    = 1;
-    static STATUS_ACTIVE     = 2;
+    static STATUS_IN_PROGRESS= 2;
     static STATUS_COMPLETED  = 3;
     static STATUS_CANCELLED  = 4;
     static STATUS_EXPIRED    = 5;
 
     static statuses = {
         STATUS_PENDING    : "Pending",
-        STATUS_ACTIVE     : "Active",
+        STATUS_IN_PROGRESS: "In Progress",
         STATUS_COMPLETED  : "Completed",
         STATUS_CANCELLED  : "Cancelled",
         STATUS_EXPIRED    : "Backlog"
@@ -48,12 +48,18 @@ export default class Task
     @Column({ default: TaskEnum.LEVEL_ONE })
     level: number
 
+    @Column()
+    created_by: number
+    
+    @Column()
+    updated_by: number
+    
     @CreateDateColumn()
     created_at: string
 
     @UpdateDateColumn()
     updated_at: string
-
+    
     @Column()
     expires_at: string
 }
