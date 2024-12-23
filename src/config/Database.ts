@@ -1,6 +1,8 @@
 import { DataSource } from "typeorm";
 import User from "../models/UserModel";
 import Authentication from "../models/AuthModel";
+import Task from "../models/TaskModel";
+import Log from "../models/LogModel";
 
 const AppDataSource:DataSource = new DataSource({
     type        : "mysql",
@@ -10,7 +12,7 @@ const AppDataSource:DataSource = new DataSource({
     password    : process.env.DB_PASS || "",
     database    : process.env.DB_NAME || "practice",
     // logging : true,
-    entities    : [User, Authentication],
+    entities    : [User, Authentication, Task, Log],
     synchronize : true
 });
 

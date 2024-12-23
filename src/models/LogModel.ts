@@ -1,20 +1,20 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm"
 import User from "./UserModel"
 
-@Entity({ name: "authentication" })
-export default class Authentication
+@Entity({ name: "logs" })
+export default class Log
 {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ unique: true })
-    token: string
+    @Column({ type: "text" })
+    comment: string
 
     @Column()
-    refresh_token: string
+    type: number
 
     @Column()
-    user_id: number
+    created_by: number
 
     @CreateDateColumn()
     created_at: string
@@ -22,6 +22,4 @@ export default class Authentication
     @UpdateDateColumn()
     updated_at: string
 
-    @Column()
-    expires_at: string
 }
