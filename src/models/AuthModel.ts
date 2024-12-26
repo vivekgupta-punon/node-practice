@@ -11,9 +11,6 @@ export default class Authentication
     token: string
 
     @Column()
-    refresh_token: string
-
-    @Column()
     user_id: number
 
     @CreateDateColumn()

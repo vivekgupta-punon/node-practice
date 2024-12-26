@@ -6,6 +6,8 @@ import Authentication from '../models/AuthModel';
 import AppDataSource from '../config/Database';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { getJwtToken } from './AuthController';
+
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -13,7 +15,16 @@ export function getUsers(req:Request, res:Response, next:NextFunction)
 {
     userRepository.find().then((users) => {
         res.status(200)
-           .send(users);
+           .send(
+                users.map(user => ({
+                    first_name  : user.first_name,
+                    last_name   : user.last_name,
+                    email       : user.email,
+                    mobile      : user.mobile,
+                    role        : UserEnum.roles[user.role],
+                    department  : UserEnum.departments[user.department]
+                }))
+            );
     }).catch((error) => {
         res.status(500)
            .send(error);
@@ -60,6 +71,8 @@ export async function loginUser(req:Request, res:Response)
                success: false,
                status : 400,
            });
+
+        return;
     }
 
     let user = await userRepository.findOneBy({email: req.body.email});
@@ -72,54 +85,103 @@ export async function loginUser(req:Request, res:Response)
                success: false,
                status : 401,
            });
+        return;
     }
 
-    const token             = jwt.sign(user!, process.env.APP_SECRET_KEY!, {expiresIn: '24h'});
+    let  token              = '';
+    let responseObj         = {};
     const authRepository    = AppDataSource.getRepository(Authentication);
-
-    // code to delete all entries in the authentication table that have expired
-    
-    let auths = await authRepository.createQueryBuilder()
-                                    .delete()
-                                    .from(Authentication)
-                                    .where("expires_at < :now", { now: new Date().toISOString() })
-                                    .execute();
+    const userToken         = await authRepository.createQueryBuilder()
+                                                  .where('user_id = :id', { id: user!.id })
+                                                  .orderBy('id', 'DESC')
+                                                  .getOne();
 
 
-    let newAuth = new Authentication();
-    newAuth.token          = token;
-    newAuth.refresh_token  = '';
-    newAuth.user_id        = user!.id;
-    newAuth.expires_at     = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    authRepository.save(newAuth);
-
-
-    // res.cookie('token', token, {
-    //     httpOnly: true
-    // });
-
-    let userObject = {};
-    if(user)
+    if(!userToken)
     {
-        userObject = {
-            id         : user.id,
-            first_name : user.first_name,
-            last_name  : user.last_name,
-            email      : user.email,
-            mobile     : user.mobile,
-            type       : user.type,
-            role       : user.role,
-            department : user.department,
-            token      : token
+        const token = getJwtToken(user);
+
+        let newAuth = new Authentication();
+        newAuth.token          = token;
+        newAuth.user_id        = user!.id;
+        newAuth.expires_at     = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+        authRepository.save(newAuth);
+
+        responseObj = {
+            user: {
+                id         : user.id,
+                first_name : user.first_name,
+                last_name  : user.last_name,
+                email      : user.email,
+                mobile     : user.mobile,
+                type       : user.type,
+                role       : user.role,
+                department : user.department,
+            },
+            accessToken : token,
         };
+    }
+    else
+    {
+
+        if(userToken.token && userToken.expires_at <= new Date().toISOString())
+        {
+            await authRepository.createQueryBuilder()
+                                        .delete()
+                                        .from(Authentication)
+                                        // .where("expires_at < :now", { now: new Date().toISOString() })
+                                        .where("user_id = :id", { id: user.id })
+                                        .execute();
+    
+    
+            const token = getJwtToken(user);
+    
+            let newAuth = new Authentication();
+            newAuth.token          = token;
+            newAuth.user_id        = user!.id;
+            newAuth.expires_at     = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    
+            authRepository.save(newAuth);
+
+            responseObj = {
+                user: {
+                    id         : user.id,
+                    first_name : user.first_name,
+                    last_name  : user.last_name,
+                    email      : user.email,
+                    mobile     : user.mobile,
+                    type       : user.type,
+                    role       : user.role,
+                    department : user.department,
+                },
+                accessToken : token,
+            };
+    
+        }
+        else
+        {
+            responseObj = {
+                user: {
+                    id         : user.id,
+                    first_name : user.first_name,
+                    last_name  : user.last_name,
+                    email      : user.email,
+                    mobile     : user.mobile,
+                    type       : user.type,
+                    role       : user.role,
+                    department : user.department,
+                },
+                accessToken : userToken.token,
+            };
+        }
     }
 
     res.status(200).send({
         message: 'Login successful',
         success: true,
         status : 200,
-        user   : userObject,
+        user   : responseObj,
     });
 }
 

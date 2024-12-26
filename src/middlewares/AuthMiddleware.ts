@@ -1,78 +1,69 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt  from "jsonwebtoken";
-import AppDataSource from '../config/Database';
 import User from '../models/UserModel';
+import Authentication from "../models/AuthModel";
+import AppDataSource from "../config/Database";
 
 
-const cookieJwtAuth = (req: Request|any, res: Response, next: NextFunction) => {
-    const token = req.cookies.jwt;
 
-    try
+const AuthUser = async (req:Request, res:Response, next:NextFunction) => {
+    const headers = req.headers;
+
+    if(!process.env.APP_SECRET_KEY)
     {
-        const user = jwt.verify(token, process.env.APP_SECRET_KEY!);
-        req.user = user;
+        res.status(401).send({
+            message: "Something went wrong"
+        });
+        return;
+    }
+
+    if((headers as any).authorization && process.env.APP_SECRET_KEY)
+    {
+        let token = (headers as any).authorization;
+        token = token.split(' ')[1];
+        try
+        {
+            const authRepository = AppDataSource.getRepository(Authentication);
+            const authModel  = await authRepository.findOneBy({
+                token: token
+            });
+
+            if(!authModel)
+            {
+                res.status(401).send({
+                    message: "Unauthorized"
+                });
+                return;
+            }
+
+            const userRepository = AppDataSource.getRepository(User);
+            const userModel      = await userRepository.findOneBy({
+                id: authModel.user_id
+            })
+
+            // const user = jwt.verify(token, process.env.APP_SECRET_KEY);
+            req.body.user = userModel;
+        }
+        catch(error)
+        {
+            // res.clearCookie('token');
+            res.status(401).send(error);
+            return;
+        }
+    }
+
+
+    if(req.body.user)
+    {
         next();
     }
-    catch(error)
+    else
     {
-        res.clearCookie('token');
-        return res.status(401).send({
-            message: "Unauthorized",
+        res.status(401).send({
+            message: "Unauthorized"
         });
+        return;
     }
 }
 
-export default cookieJwtAuth;
-
-// const isLoggedIn = async (req: Request|any, res: Response, next: NextFunction) => {
-//     try
-//     {
-//         const { authorization } = req.headers;
-//         if(!authorization)
-//         {
-//             return res.status(401).send({
-//                 message: "Unauthorized",
-//             });
-//         }
-
-//         const accessToken   = authorization.split(" ")[1];
-//         const payload       = await jwt.verify(accessToken, process.env.APP_SECRET_KEY!);
-
-//         const { id } = payload as any;
-
-//         if(!id)
-//         {
-//             return res.status(401).send({
-//                 message: "Unauthorized",
-//             });
-//         }
-
-//         const userRepository    = AppDataSource.getRepository(User);
-//         const user              = await userRepository.findOneBy({id: id});
-
-//         if(!user)
-//         {
-//             return res.status(401).send({
-//                 message: "Unauthorized",
-//             });
-//         }
-
-//         req.user = user;
-//         next();
-//     }
-//     catch(error)
-//     {
-//         if(error instanceof jwt.TokenExpiredError)
-//         {
-//             return res.status(401).send({
-//                 message: "Login Session expired!"
-//             });
-//         }
-//         return res.status(500).send({
-//             message: "Server error"
-//         });
-//     }
-// }
-
-
-// export default isLoggedIn;
+export default AuthUser;
