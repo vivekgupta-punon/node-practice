@@ -6,7 +6,7 @@ import Authentication from '../models/AuthModel';
 import AppDataSource from '../config/Database';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { getJwtToken } from './AuthController';
+import { generateAccessToken, generateRefreshToken } from './AuthController';
 
 
 const userRepository = AppDataSource.getRepository(User);
@@ -63,126 +63,86 @@ export function getUserById(req:Request, res:Response, next:NextFunction)
 
 export async function loginUser(req:Request, res:Response)
 {
-    if(!req.body.email || !req.body.password)
-    {
-        res.status(400)
-           .send({
-               message: 'Email and password are required',
-               success: false,
-               status : 400,
-           });
+    const {email, password} = req.body;
 
-        return;
+    if(!email || !password)
+    {
+        throw new Error('Email and Password both are required');
     }
 
-    let user = await userRepository.findOneBy({email: req.body.email});
+    const userModel = await userRepository.findOneBy({email: email});
 
-    if(!user || !await bcrypt.compare(req.body.password, user.password))
+    if(!userModel)
     {
-        res.status(401)
-           .send({
-               message: 'Invalid email or password',
-               success: false,
-               status : 401,
-           });
-        return;
+        throw new Error('User not found');
+    }
+    if(!await bcrypt.compare(password, userModel.password))
+    {
+        throw new Error('Invalid email or password');
     }
 
-    let  token              = '';
-    let responseObj         = {};
-    const authRepository    = AppDataSource.getRepository(Authentication);
-    const userToken         = await authRepository.createQueryBuilder()
-                                                  .where('user_id = :id', { id: user!.id })
-                                                  .orderBy('id', 'DESC')
-                                                  .getOne();
+
+    const accessToken   = generateAccessToken(userModel);
+    const refreshToken  = generateRefreshToken(userModel);
+
+    const authRepository = AppDataSource.getRepository(Authentication);
+
+    await authRepository.delete({user_id: userModel.id});
+
+    let newAuth = new Authentication();
+    newAuth.refresh_token  = refreshToken;
+    newAuth.user_id        = userModel.id;
+    newAuth.expires_at     = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    await authRepository.save(newAuth);
 
 
-    if(!userToken)
-    {
-        const token = getJwtToken(user);
+    const cookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: true,
+    };
 
-        let newAuth = new Authentication();
-        newAuth.token          = token;
-        newAuth.user_id        = user!.id;
-        newAuth.expires_at     = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-        authRepository.save(newAuth);
+    res.status(200)
+       .cookie('refreshToken', refreshToken, cookieOptions)
+       .cookie('accessToken', accessToken, cookieOptions)
+       .json({
+           message: 'User logged in successfully',
+           success: true,
+           status : 200,
+           accessToken: accessToken,
+           refreshToken: refreshToken,
+           user: {
+               first_name  : userModel.first_name,
+               last_name   : userModel.last_name,
+               email       : userModel.email,
+               mobile      : userModel.mobile,
+               role        : UserEnum.roles[userModel.role],
+               department  : UserEnum.departments[userModel.department]
+           }
+        });
+}
 
-        responseObj = {
-            user: {
-                id         : user.id,
-                first_name : user.first_name,
-                last_name  : user.last_name,
-                email      : user.email,
-                mobile     : user.mobile,
-                type       : user.type,
-                role       : user.role,
-                department : user.department,
-            },
-            accessToken : token,
-        };
-    }
-    else
-    {
 
-        if(userToken.token && userToken.expires_at <= new Date().toISOString())
-        {
-            await authRepository.createQueryBuilder()
-                                        .delete()
-                                        .from(Authentication)
-                                        // .where("expires_at < :now", { now: new Date().toISOString() })
-                                        .where("user_id = :id", { id: user.id })
-                                        .execute();
-    
-    
-            const token = getJwtToken(user);
-    
-            let newAuth = new Authentication();
-            newAuth.token          = token;
-            newAuth.user_id        = user!.id;
-            newAuth.expires_at     = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    
-            authRepository.save(newAuth);
+export async function logoutUser(req:Request, res:Response)
+{
+    const authRepository = AppDataSource.getRepository(Authentication);
+    await authRepository.delete({user_id: req.body.id});
 
-            responseObj = {
-                user: {
-                    id         : user.id,
-                    first_name : user.first_name,
-                    last_name  : user.last_name,
-                    email      : user.email,
-                    mobile     : user.mobile,
-                    type       : user.type,
-                    role       : user.role,
-                    department : user.department,
-                },
-                accessToken : token,
-            };
-    
-        }
-        else
-        {
-            responseObj = {
-                user: {
-                    id         : user.id,
-                    first_name : user.first_name,
-                    last_name  : user.last_name,
-                    email      : user.email,
-                    mobile     : user.mobile,
-                    type       : user.type,
-                    role       : user.role,
-                    department : user.department,
-                },
-                accessToken : userToken.token,
-            };
-        }
-    }
+    const cookieOptions:CookieOptions = {
+        httpOnly: true,
+        secure: true,
+        expires: new Date(0)
+    };
+    res.status(200)
+       .clearCookie('refreshToken', cookieOptions)
+       .clearCookie('accessToken', cookieOptions)
+       .send({
+           message: 'User logged out successfully',
+           success: true,
+           status : 200,
+       });
 
-    res.status(200).send({
-        message: 'Login successful',
-        success: true,
-        status : 200,
-        user   : responseObj,
-    });
 }
 
 

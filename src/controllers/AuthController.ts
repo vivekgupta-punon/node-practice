@@ -1,40 +1,58 @@
 import User from "../models/UserModel";
 import jwt from 'jsonwebtoken';
-import { Token } from "../interfaces/RequestInterfaces";
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 
-export function getJwtToken(user:User, expiresIn:string='1h'):string
+export function generateAccessToken(user:User, expiresIn:string='24h'):string
 {
-    const payload = {
-        id          : user.id,
-        email       : user.email,
-        role        : user.role,
-        department  : user.department
-    };
-
-    if(process.env.APP_SECRET_KEY)
+    if(user && process.env.APP_ACCESS_TOKEN)
     {
-        const accessToken   = jwt.sign(payload, process.env.APP_SECRET_KEY, {expiresIn});
+        const payload = {
+            id          : user.id,
+            role        : user.role,
+            department  : user.department
+        };
+        const accessToken   = jwt.sign(payload, process.env.APP_ACCESS_TOKEN, {expiresIn});
         
-        return accessToken;
+        return accessToken
     }
-    else
+
+    return '';
+}
+
+export function generateRefreshToken(user:User, expiresIn:string='30d'):string
+{
+    if(user && process.env.APP_REFRESH_TOKEN)
     {
-        throw new Error('SECRET KEY is not defined');
+        const payload = {
+            id          : user.id,
+            role        : user.role,
+            department  : user.department
+        };
+        const refreshToken   = jwt.sign(payload, process.env.APP_REFRESH_TOKEN, {expiresIn});
+        
+        return refreshToken
     }
+
+    return '';
 }
 
 
 export function verifyAccessToken(token:string):any
 {
-    if(!process.env.APP_SECRET_KEY)
-    {
+    if(!process.env.APP_ACCESS_TOKEN)
         throw new Error('SECRET KEY is not defined');
-    }
 
-    return jwt.verify(token, process.env.APP_SECRET_KEY)
+    return jwt.verify(token, process.env.APP_ACCESS_TOKEN)
+}
+
+export function verifyRefreshToken(token:string):any
+{
+    if(!process.env.APP_REFRESH_TOKEN)
+        throw new Error('SECRET KEY is not defined');
+
+    return jwt.verify(token, process.env.APP_REFRESH_TOKEN)
 }
 

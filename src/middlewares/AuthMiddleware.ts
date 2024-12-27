@@ -3,67 +3,41 @@ import jwt  from "jsonwebtoken";
 import User from '../models/UserModel';
 import Authentication from "../models/AuthModel";
 import AppDataSource from "../config/Database";
+import { verifyAccessToken } from "../controllers/AuthController";
 
 
 
-const AuthUser = async (req:Request, res:Response, next:NextFunction) => {
-    const headers = req.headers;
+export const AuthUser = async (req:Request, res:Response, next:NextFunction):Promise<any> => {
+    const accessToken = req.cookies?.accessToken || req.headers?.authorization?.split(' ')[1];
 
-    if(!process.env.APP_SECRET_KEY)
+    if(!accessToken)
     {
-        res.status(401).send({
-            message: "Something went wrong"
-        });
-        return;
+        return res.status(401)
+                  .send('Unauthorized Access');
     }
 
-    if((headers as any).authorization && process.env.APP_SECRET_KEY)
+    try 
     {
-        let token = (headers as any).authorization;
-        token = token.split(' ')[1];
-        try
+        const payload           = verifyAccessToken(accessToken);
+        const userRepository    = AppDataSource.getRepository(User);
+        const userModel         = await userRepository.findOneBy({
+                                                        id: payload?.id,
+                                                        role: payload?.role
+                                                    });
+
+        if(!userModel)
         {
-            const authRepository = AppDataSource.getRepository(Authentication);
-            const authModel  = await authRepository.findOneBy({
-                token: token
-            });
-
-            if(!authModel)
-            {
-                res.status(401).send({
-                    message: "Unauthorized"
-                });
-                return;
-            }
-
-            const userRepository = AppDataSource.getRepository(User);
-            const userModel      = await userRepository.findOneBy({
-                id: authModel.user_id
-            })
-
-            // const user = jwt.verify(token, process.env.APP_SECRET_KEY);
-            req.body.user = userModel;
+            return res.status(401)
+                      .send('Unauthorized Access');
         }
-        catch(error)
-        {
-            // res.clearCookie('token');
-            res.status(401).send(error);
-            return;
-        }
-    }
 
-
-    if(req.body.user)
-    {
+        req.body.user = userModel;
         next();
     }
-    else
+    catch (error) 
     {
-        res.status(401).send({
-            message: "Unauthorized"
-        });
-        return;
+        return res.status(401)
+                  .send('Something went wrong');
     }
+    
 }
-
-export default AuthUser;

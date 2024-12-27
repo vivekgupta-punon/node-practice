@@ -8,7 +8,7 @@ export default class Authentication
     id: number
 
     @Column({ unique: true })
-    token: string
+    refresh_token: string
 
     @Column()
     user_id: number
