@@ -1,3 +1,22 @@
+
+<?php
+
+    $currentPage = explode('/',$_SERVER['REQUEST_URI']);
+    $currentPage = end($currentPage);
+    $currentPage = explode('.', $currentPage);
+
+    if($currentPage[0] != 'login' && (!isset($_COOKIE['accessToken']) || $_COOKIE['accessToken'] == ''))
+    {
+        header('Location: ' . urlTo('login'));
+    }
+
+    if($currentPage[0] == 'login' && (isset($_COOKIE['accessToken']) && $_COOKIE['accessToken'] != ''))
+    {
+        header('Location: ' . urlTo(''));
+    }
+
+?>
+
 <header class="p-2 bg-dark text-white">
     <div class="container">
         <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
@@ -17,8 +36,12 @@
         </form> -->
 
             <div class="text-end">
-                <a href="<?= urlTo('login') ?>" class="btn btn-outline-light me-2">Login</a>
-                <a href="<?= urlTo('signup') ?>" class="btn btn-warning">Sign-up</a>
+                <?php if(isset($_COOKIE['accessToken']) && $_COOKIE['accessToken'] != '') { ?>
+                    <button id="logout-user" class="btn btn-danger me-2">Logout</button>
+                <?php }else{ ?>
+                    <a href="<?= urlTo('login') ?>" class="btn btn-outline-light me-2">Login</a>
+                    <a href="<?= urlTo('signup') ?>" class="btn btn-warning">Sign-up</a>
+                <?php } ?>
             </div>
         </div>
     </div>

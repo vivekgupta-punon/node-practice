@@ -2,6 +2,7 @@ import "reflect-metadata";
 import express from 'express';
 import AppDataSource  from './config/Database';
 import userRouter from './routes/UserRoutes';
+import taskRouter from './routes/TaskRoutes';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
@@ -32,6 +33,7 @@ AppDataSource.initialize().then(() => {
 
 
 app.use('/api/user', userRouter);
+app.use('/api/task', taskRouter);
 
 
 // if no route found, return 404

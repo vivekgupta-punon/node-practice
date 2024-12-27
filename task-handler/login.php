@@ -34,12 +34,50 @@ include('./helpers.php');
                     <input type="checkbox" class="form-check-input" id="exampleCheck1">
                     <label class="form-check-label" for="exampleCheck1">Check me out</label>
                 </div> -->
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="submit" id="login-form-submit" class="btn btn-primary">Submit</button>
             </form>
         </div>
     </div>
 
     <?php include('layouts/js.php'); ?>
+
+    <script>
+        $(document).ready(function() {
+            
+            $('#login-form-submit').click(function(e){
+                e.preventDefault();
+                let form = $('#login-form');
+                let email = $('#login-form-email').val();
+                let password = $('#login-form-password').val();
+
+                $.ajax({
+                    type: 'POST',
+                    url: API_URL + 'user/login',
+                    data: {
+                        email: email,
+                        password: password
+                    },
+                    // headers: {
+                    //     "Content-Type": "application/json"
+                    // },
+                    success: function(response){
+                        if(response.status == 200)
+                        {    
+                            setCookie('accessToken', response.accessToken, 1);
+                            setCookie('refreshToken', response.refreshToken, 30);
+                            alert(response.message);
+                            window.location.href = BASE_URL;
+                        }
+                        else
+                        {
+                            alert(response.message);
+                        }
+                    }
+                });
+            });
+        })
+    </script>
+
 </body>
 
 </html>

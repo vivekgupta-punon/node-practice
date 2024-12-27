@@ -8,7 +8,12 @@ import { verifyAccessToken } from "../controllers/AuthController";
 
 
 export const AuthUser = async (req:Request, res:Response, next:NextFunction):Promise<any> => {
-    const accessToken = req.cookies?.accessToken || req.headers?.authorization?.split(' ')[1];
+    let accessToken = req.cookies?.accessToken || req.headers?.authorization?.split(' ')[1];
+
+    if(!accessToken)
+    {
+        accessToken = req.headers?.accesstoken;
+    }
 
     if(!accessToken)
     {

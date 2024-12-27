@@ -68,20 +68,23 @@ $(function(){
                 "Content-Type": "application/json"
             },
             data: {
-                first_name: firstName,
-                last_name: lastName,
-                email: email,
-                mobile: mobile,
-                password: password,
+                first_name      : firstName,
+                last_name       : lastName,
+                email           : email,
+                mobile          : mobile,
+                password        : password,
                 confirm_password: confirmPassword,
-                role: role,
-                department: department
+                role            : role,
+                department      : department
             },
             success: function(response){
-                if(response.success){
+                if(response.success)
+                {
                     alert('User created successfully');
                     window.location.href = '/user';
-                }else{
+                }
+                else
+                {
                     alert('Error: ' + response.message);
                 }
             },

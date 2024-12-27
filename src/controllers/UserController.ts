@@ -5,7 +5,6 @@ import User, { UserEnum } from '../models/UserModel';
 import Authentication from '../models/AuthModel';
 import AppDataSource from '../config/Database';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { generateAccessToken, generateRefreshToken } from './AuthController';
 
 
@@ -17,6 +16,7 @@ export function getUsers(req:Request, res:Response, next:NextFunction)
         res.status(200)
            .send(
                 users.map(user => ({
+                    id          : user.id,
                     first_name  : user.first_name,
                     last_name   : user.last_name,
                     email       : user.email,
@@ -74,7 +74,6 @@ export async function loginUser(req:Request, res:Response):Promise<any>
            status   : 404,
            user     : {}
         });
-        return false;
     }
 
     const userModel = await userRepository.findOneBy({email: email});
@@ -88,82 +87,89 @@ export async function loginUser(req:Request, res:Response):Promise<any>
            status   : 404,
            user     : {}
         });
-        return false;
     }
-    if(!await bcrypt.compare(password, userModel.password))
+    else
     {
-        // throw new Error('Invalid email or password');
-        res.status(400)
-       .json({
-           message  : 'Invalid email or password',
-           success  : false,
-           status   : 400,
-           user     : {}
-        });
-        return false;
+        let isPasswordValid = await bcrypt.compare(password, userModel.password);
+        if(isPasswordValid === false)
+        {
+            // throw new Error('Invalid email or password');
+            res.status(400)
+           .json({
+               message  : 'Invalid email or password',
+               success  : false,
+               status   : 400,
+               user     : {}
+            });
+        }
+        else
+        {
+            const accessToken   = generateAccessToken(userModel);
+            const refreshToken  = generateRefreshToken(userModel);
+    
+            const authRepository = AppDataSource.getRepository(Authentication);
+    
+            await authRepository.delete({user_id: userModel.id});
+    
+            let newAuth = new Authentication();
+            newAuth.refresh_token  = refreshToken;
+            newAuth.user_id        = userModel.id;
+            newAuth.expires_at     = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    
+            await authRepository.save(newAuth);
+    
+            res.status(200)
+            .cookie('refreshToken', refreshToken)
+            .cookie('accessToken', accessToken)
+            .json({
+                message: 'User logged in successfully',
+                success: true,
+                status : 200,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                user: {
+                    first_name  : userModel.first_name,
+                    last_name   : userModel.last_name,
+                    email       : userModel.email,
+                    mobile      : userModel.mobile,
+                    role        : UserEnum.roles[userModel.role],
+                    department  : UserEnum.departments[userModel.department]
+                }
+                });
+        }
     }
 
 
-    const accessToken   = generateAccessToken(userModel);
-    const refreshToken  = generateRefreshToken(userModel);
-
-    const authRepository = AppDataSource.getRepository(Authentication);
-
-    await authRepository.delete({user_id: userModel.id});
-
-    let newAuth = new Authentication();
-    newAuth.refresh_token  = refreshToken;
-    newAuth.user_id        = userModel.id;
-    newAuth.expires_at     = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    await authRepository.save(newAuth);
-
-
-    const cookieOptions: CookieOptions = {
-        httpOnly: true,
-        secure: true,
-    };
-
-
-    res.status(200)
-       .cookie('refreshToken', refreshToken, cookieOptions)
-       .cookie('accessToken', accessToken, cookieOptions)
-       .json({
-           message: 'User logged in successfully',
-           success: true,
-           status : 200,
-           accessToken: accessToken,
-           refreshToken: refreshToken,
-           user: {
-               first_name  : userModel.first_name,
-               last_name   : userModel.last_name,
-               email       : userModel.email,
-               mobile      : userModel.mobile,
-               role        : UserEnum.roles[userModel.role],
-               department  : UserEnum.departments[userModel.department]
-           }
-        });
 }
 
 
 export async function logoutUser(req:Request, res:Response)
 {
     const authRepository = AppDataSource.getRepository(Authentication);
-    await authRepository.delete({user_id: req.body.id});
+    const dbResponse = await authRepository.delete({user_id: req.body.id});
 
-    const cookieOptions:CookieOptions = {
-        httpOnly: true,
-        secure: true,
-        expires: new Date(0)
-    };
-    res.status(200)
-       .clearCookie('refreshToken', cookieOptions)
-       .clearCookie('accessToken', cookieOptions)
-       .send({
-           message: 'User logged out successfully',
-           success: true,
-           status : 200,
-       });
+    console.log(dbResponse.affected);
+
+    if(dbResponse.affected)
+    {
+        res.status(404)
+           .send({
+               message: 'User not found',
+               success: false,
+               status : 404,
+           });
+    }
+    else
+    {
+        res.status(200)
+           .clearCookie('refreshToken')
+           .clearCookie('accessToken')
+           .send({
+               message: 'User logged out successfully',
+               success: true,
+               status : 200,
+           });
+    }
 
 }
 
