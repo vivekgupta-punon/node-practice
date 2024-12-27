@@ -61,24 +61,46 @@ export function getUserById(req:Request, res:Response, next:NextFunction)
 }
 
 
-export async function loginUser(req:Request, res:Response)
+export async function loginUser(req:Request, res:Response):Promise<any>
 {
     const {email, password} = req.body;
 
     if(!email || !password)
     {
-        throw new Error('Email and Password both are required');
+        res.status(400)
+       .json({
+           message  : 'Email and password are required',
+           success  : false,
+           status   : 404,
+           user     : {}
+        });
+        return false;
     }
 
     const userModel = await userRepository.findOneBy({email: email});
 
     if(!userModel)
     {
-        throw new Error('User not found');
+        res.status(404)
+       .json({
+           message  : 'User not found',
+           success  : false,
+           status   : 404,
+           user     : {}
+        });
+        return false;
     }
     if(!await bcrypt.compare(password, userModel.password))
     {
-        throw new Error('Invalid email or password');
+        // throw new Error('Invalid email or password');
+        res.status(400)
+       .json({
+           message  : 'Invalid email or password',
+           success  : false,
+           status   : 400,
+           user     : {}
+        });
+        return false;
     }
 
 
