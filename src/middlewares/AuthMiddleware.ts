@@ -1,8 +1,6 @@
-import express, { Request, Response, NextFunction, RequestHandler } from "express";
-import jwt  from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
 import User from '../models/UserModel';
-import Authentication from "../models/AuthModel";
-import AppDataSource from "../config/Database";
+import { UserInterface } from "../interfaces/UserInterfaces";
 import { verifyAccessToken } from "../controllers/AuthController";
 
 
@@ -24,11 +22,12 @@ export const AuthUser = async (req:Request, res:Response, next:NextFunction):Pro
     try 
     {
         const payload           = verifyAccessToken(accessToken);
-        const userRepository    = AppDataSource.getRepository(User);
-        const userModel         = await userRepository.findOneBy({
-                                                        id: payload?.id,
-                                                        role: payload?.role
-                                                    });
+        const userModel         = await User.findOne({
+                                                        where: {
+                                                            id: payload?.id,
+                                                            role: payload?.role
+                                                        }
+                                                    }) as unknown as UserInterface;
 
         if(!userModel)
         {

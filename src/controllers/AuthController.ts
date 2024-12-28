@@ -1,11 +1,12 @@
 import User from "../models/UserModel";
+import { UserInterface } from "../interfaces/UserInterfaces";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 
-export function generateAccessToken(user:User, expiresIn:string='24h'):string
+export function generateAccessToken(user:UserInterface, expiresIn:string='24h'):string
 {
     if(user && process.env.APP_ACCESS_TOKEN)
     {
@@ -22,7 +23,7 @@ export function generateAccessToken(user:User, expiresIn:string='24h'):string
     return '';
 }
 
-export function generateRefreshToken(user:User, expiresIn:string='30d'):string
+export function generateRefreshToken(user:UserInterface, expiresIn:string='30d'):string
 {
     if(user && process.env.APP_REFRESH_TOKEN)
     {

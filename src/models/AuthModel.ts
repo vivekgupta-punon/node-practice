@@ -1,24 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm"
-import User from "./UserModel"
+import { sequelizeConnection } from "../config/Database";
+import { DataTypes } from "sequelize";
 
-@Entity({ name: "authentication" })
-export default class Authentication
+
+export const Authentication = sequelizeConnection.define('authentication', {
+    id              : {
+                        type: DataTypes.INTEGER,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+    refresh_token   : {
+                        type: DataTypes.STRING,
+                        unique: true
+                    },
+    user_id         : {
+                        type: DataTypes.INTEGER
+                    },
+    expires_at      : {
+                        type: DataTypes.DATE
+                    }
+    
+},
 {
-    @PrimaryGeneratedColumn()
-    id: number
+    timestamps      : true,
+    createdAt       : 'created_at',
+    updatedAt       : 'updated_at'
+});
 
-    @Column({ unique: true })
-    refresh_token: string
 
-    @Column()
-    user_id: number
-
-    @CreateDateColumn()
-    created_at: string
-
-    @UpdateDateColumn()
-    updated_at: string
-
-    @Column()
-    expires_at: string
-}
+export default Authentication

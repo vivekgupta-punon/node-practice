@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm"
-import User from "./UserModel"
+import { sequelizeConnection } from "../config/Database";
+import { DataTypes } from "sequelize";
+import User from "./UserModel";
 
 
 export class TaskEnum
@@ -31,39 +32,56 @@ export class TaskEnum
 }
 
 
-@Entity({ name: "tasks" })
-export default class Task
+const Task = sequelizeConnection.define('tasks', {
+    id          : {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true
+                },
+    title       : {
+                    type: DataTypes.STRING
+                },
+    content     : {
+                    type: DataTypes.TEXT
+                },
+    user_id     : {
+                    type: DataTypes.INTEGER,
+                    references: {
+                        model: User,
+                        key: 'id'
+                    }
+                },
+    status      : {
+                    type: DataTypes.INTEGER,
+                    defaultValue: TaskEnum.STATUS_PENDING
+                },
+    level       : {
+                    type: DataTypes.INTEGER,
+                    defaultValue: TaskEnum.LEVEL_LOW
+                },
+    deadline    : {
+                    type: DataTypes.DATE
+                },
+    started_at  : {
+                    type: DataTypes.DATE,
+                    allowNull: true
+                },
+    completed_at: {
+                    type: DataTypes.DATE,
+                    allowNull: true
+                },
+    created_by  : {
+                    type: DataTypes.INTEGER
+                },
+    updated_by  : {
+                    type: DataTypes.INTEGER
+                }
+},
 {
-    @PrimaryGeneratedColumn()
-    id: number
+    timestamps  : true,
+    createdAt   : 'created_at',
+    updatedAt   : 'updated_at'
+});
 
-    @Column()
-    title: string
 
-    @Column({ type: "text" })
-    content: string
-
-    @Column({ nullable: true })
-    user_id: number
-
-    @Column({ default: TaskEnum.STATUS_PENDING })
-    status: number
-
-    @Column({ default: TaskEnum.LEVEL_LOW })
-    level: number
-
-    @Column()
-    created_by: number
-    
-    @Column()
-    updated_by: number
-    
-    @CreateDateColumn()
-    created_at: string
-
-    @UpdateDateColumn()
-    updated_at: string
-    
-    @Column()
-    expires_at: string
-}
+export default Task;

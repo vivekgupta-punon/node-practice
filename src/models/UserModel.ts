@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm"
-import Task from "./TaskModel"
+import { sequelizeConnection } from "../config/Database";
+import { DataTypes } from "sequelize";
+import Task from "./TaskModel";
 
 export class UserEnum
 {
@@ -57,54 +58,79 @@ export class UserEnum
 }
 
 
-@Entity({ name: "users" })
-export default class User
+const User = sequelizeConnection.define("users", {
+    id          : {
+                    type            : DataTypes.INTEGER,
+                    primaryKey      : true,
+                    autoIncrement   : true
+                },
+    first_name  : {
+                    type            : DataTypes.STRING,
+                    allowNull       : false
+                },
+    last_name   : {
+                    type            : DataTypes.STRING,
+                    allowNull       : false
+                },
+    email       : {
+                    type            : DataTypes.STRING,
+                    allowNull       : false,
+                    unique          : true
+                },
+    mobile      : {
+                    type            : DataTypes.INTEGER,
+                    allowNull       : true,
+                    unique          : true
+                },
+    password    : {
+                    type            : DataTypes.STRING,
+                    allowNull       : false
+                },
+    type        : {
+                    type            : DataTypes.SMALLINT,
+                    allowNull       : false,
+                    defaultValue    : 0
+                },
+    role        : {
+                    type            : DataTypes.SMALLINT,
+                    allowNull       : false,
+                    defaultValue    : UserEnum.ROLE_USER
+                },
+    department  :  {
+                    type            : DataTypes.SMALLINT,
+                    allowNull       : true
+                },
+    designation : {
+                    type            : DataTypes.STRING,
+                    allowNull       : true
+                },
+    status      : {
+                    type            : DataTypes.SMALLINT,
+                    allowNull       : false,
+                    defaultValue    : UserEnum.STATUS_ACTIVE
+                },
+    manager     : {
+                    type            : DataTypes.INTEGER,
+                    allowNull       : true
+                },
+    created_by  : {
+                    type            : DataTypes.INTEGER,
+                    allowNull       : true,
+                },
+    updated_by  : {
+                    type            : DataTypes.INTEGER,
+                    allowNull       : true,
+                }
+},
 {
-    @PrimaryGeneratedColumn()
-    id: number
+    timestamps  : true,
+    createdAt   : "created_at",
+    updatedAt   : "updated_at"
+});
 
-    @Column()
-    first_name: string
+User.hasMany(Task, {
+    foreignKey: 'user_id',
+    as: 'tasks'
+});
 
-    @Column()
-    last_name: string
-
-    @Column({ unique: true })
-    email: string
-
-    @Column({ unique: true })
-    mobile: string
-
-    @Column()
-    password: string
-
-    @Column({ type: "int", default: null })
-    type:number
-
-    @Column({ type: "int", default: UserEnum.ROLE_USER })
-    role: number
-
-    @Column({ type: "int" })
-    department: number
-
-    @Column()
-    designation: string
-
-    @Column({ default: UserEnum.STATUS_ACTIVE })
-    status: number
-
-    @Column({ default: null})
-    manager: number
-
-    @CreateDateColumn()
-    created_at: Date
-
-    @UpdateDateColumn()
-    updated_at: Date
-
-    @Column({ default: null})
-    created_by: number
-
-    @Column({ default: null})
-    updated_by: number
-}
+export default User;

@@ -1,30 +1,23 @@
-// import { Request, Response } from 'express';
 import { NextFunction, Request, Response, CookieOptions } from 'express-serve-static-core';
-import { CreateUserInterface } from '../interfaces/UserInterfaces';
+// import { CreateUserInterface } from '../interfaces/UserInterfaces';
+import { CreateUserInterface, UserInterface } from '../interfaces/UserInterfaces';
 import User, { UserEnum } from '../models/UserModel';
+import Task from '../models/TaskModel';
 import Authentication from '../models/AuthModel';
-import AppDataSource from '../config/Database';
+// import AppDataSource from '../config/Database';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken } from './AuthController';
 
 
-const userRepository = AppDataSource.getRepository(User);
 
-export function getUsers(req:Request, res:Response, next:NextFunction)
+export async function getUsers(req:Request, res:Response, next:NextFunction)
 {
-    userRepository.find().then((users) => {
+    const users = await User.findAll({
+        // include     : [Task],
+        attributes  : ['id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'department']
+    }).then((users) => {
         res.status(200)
-           .send(
-                users.map(user => ({
-                    id          : user.id,
-                    first_name  : user.first_name,
-                    last_name   : user.last_name,
-                    email       : user.email,
-                    mobile      : user.mobile,
-                    role        : UserEnum.roles[user.role],
-                    department  : UserEnum.departments[user.department]
-                }))
-            );
+           .send(users);
     }).catch((error) => {
         res.status(500)
            .send(error);
@@ -32,16 +25,21 @@ export function getUsers(req:Request, res:Response, next:NextFunction)
 }
 
 
-export function getUserById(req:Request, res:Response, next:NextFunction)
+export async function getUserById(req:Request, res:Response, next:NextFunction)
 {
     if(!req.params.id)
     {
         res.status(400)
            .send('User ID is required');
+        return;
     }
 
     
-    userRepository.findOneBy({id: parseInt(req.params.id)}).then((user) => {
+    await User.findOne({
+        where: {
+            id: parseInt(req.params.id)
+        }
+    }).then((user) => {
         if(user)
         {
             res.status(200)
@@ -76,7 +74,12 @@ export async function loginUser(req:Request, res:Response):Promise<any>
         });
     }
 
-    const userModel = await userRepository.findOneBy({email: email});
+    const userModel = await User.findOne({
+        where: {
+            email: email
+        }
+    }) as unknown as UserInterface;
+
 
     if(!userModel)
     {
@@ -93,7 +96,6 @@ export async function loginUser(req:Request, res:Response):Promise<any>
         let isPasswordValid = await bcrypt.compare(password, userModel.password);
         if(isPasswordValid === false)
         {
-            // throw new Error('Invalid email or password');
             res.status(400)
            .json({
                message  : 'Invalid email or password',
@@ -106,36 +108,40 @@ export async function loginUser(req:Request, res:Response):Promise<any>
         {
             const accessToken   = generateAccessToken(userModel);
             const refreshToken  = generateRefreshToken(userModel);
-    
-            const authRepository = AppDataSource.getRepository(Authentication);
-    
-            await authRepository.delete({user_id: userModel.id});
-    
-            let newAuth = new Authentication();
-            newAuth.refresh_token  = refreshToken;
-            newAuth.user_id        = userModel.id;
-            newAuth.expires_at     = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    
-            await authRepository.save(newAuth);
-    
-            res.status(200)
-            .cookie('refreshToken', refreshToken)
-            .cookie('accessToken', accessToken)
-            .json({
-                message: 'User logged in successfully',
-                success: true,
-                status : 200,
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                user: {
-                    first_name  : userModel.first_name,
-                    last_name   : userModel.last_name,
-                    email       : userModel.email,
-                    mobile      : userModel.mobile,
-                    role        : UserEnum.roles[userModel.role],
-                    department  : UserEnum.departments[userModel.department]
+        
+            await Authentication.destroy({
+                where: {
+                    user_id: userModel.id
                 }
-                });
+            });
+
+            const newAuth = await Authentication.create({
+                refresh_token    : refreshToken,
+                user_id          : userModel.id,
+                expires_at       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            }).then((auth) => {
+                res.status(200)
+                   .cookie('refreshToken', refreshToken)
+                   .cookie('accessToken', accessToken)
+                   .json({
+                       message: 'User logged in successfully',
+                       success: true,
+                       status : 200,
+                       accessToken: accessToken,
+                       refreshToken: refreshToken,
+                       user: {
+                           first_name  : userModel.first_name,
+                           last_name   : userModel.last_name,
+                           email       : userModel.email,
+                           mobile      : userModel.mobile,
+                           role        : UserEnum.roles[userModel.role],
+                           department  : UserEnum.departments[userModel.department]
+                       }
+                    });
+            }).catch((error) => {
+                res.status(500)
+                   .send(error);
+            });
         }
     }
 
@@ -145,12 +151,21 @@ export async function loginUser(req:Request, res:Response):Promise<any>
 
 export async function logoutUser(req:Request, res:Response)
 {
-    const authRepository = AppDataSource.getRepository(Authentication);
-    const dbResponse = await authRepository.delete({user_id: req.body.id});
+    if(!req.body.id)
+    {
+        res.status(400)
+           .send('User ID is required');
+        return;
+    }
 
-    console.log(dbResponse.affected);
 
-    if(dbResponse.affected)
+    let rowDeleted = await Authentication.destroy({
+        where: {
+            user_id: req.body.id
+        }
+    });
+
+    if(rowDeleted === 0)
     {
         res.status(404)
            .send({
@@ -176,30 +191,165 @@ export async function logoutUser(req:Request, res:Response)
 
 export async function createUser(req:Request, res:Response)
 {
-    let user: CreateUserInterface = req.body;   
+    const body = req.body as unknown as CreateUserInterface; 
 
-    let newUser = new User();
-    newUser.first_name  = user.first_name;
-    newUser.last_name   = user.last_name;
-    newUser.email       = user.email;
-    newUser.mobile      = user.mobile;
-    newUser.password    = await bcrypt.hash(user.password, 10);
-    newUser.type        = user.type;
-    newUser.role        = user.role;
-    newUser.department  = user.department;
+    if(body.first_name && body.last_name && body.email && body.mobile && body.password && body.confirm_password)
+    {
+        if(body.password !== body.confirm_password)
+        {
+            res.status(400)
+            .send({
+                message: 'Password and confirm password do not match',
+                success: false,
+                status : 400,
+            });
+            return;
+        }
+        if(body.mobile.length !== 10)
+        {
+            res.status(400)
+            .send({
+                message: 'Mobile number must be 10 digits',
+                success: false,
+                status : 400,
+            });
+            return;
+        }
+        if(body.password.length < 6)
+        {
+            res.status(400)
+            .send({
+                message: 'Password must be at least 6 characters',
+                success: false,
+                status : 400,
+            });
+            return;
+        }
 
-    userRepository.save(newUser).then((user) => {
-        res.status(201)
-           .send({
-                message: 'User created successfully',
-                user   : user,
-                status : 201,
-                success: true,
-           });
-    }).catch((error) => {
-        res.status(500)
-           .send(error);
-    });
+        body.password   = await bcrypt.hash(body.password, 10);
+        body.first_name = body.first_name.trim().toLocaleLowerCase();
+        body.last_name  = body.last_name.trim().toLocaleLowerCase();
+        body.email      = body.email.trim().toLocaleLowerCase();
+        body.mobile     = body.mobile.trim();
+
+        const newUser =  await User.create({
+            first_name  : body.first_name,
+            last_name   : body.last_name,
+            email       : body.email,
+            mobile      : body.mobile,
+            password    : body.password,
+        }).then((user) => {
+            res.status(201)
+               .send({
+                    message: 'User created successfully',
+                    user   : user,
+                    status : 201,
+                    success: true,
+               });
+        }).catch((error) => {
+            res.status(500)
+               .send(error);
+        });
+
+        console.log(newUser);
+    }
+    else
+    {
+        res.status(400)
+        .send({
+            message: 'All fields are required',
+            success: false,
+            status : 400,
+        });
+        return;
+    }
+}
+
+
+export async function deleteUser(req:Request, res:Response, next:NextFunction)
+{
+    let body = req.body;
+
+
+    if(body.id)
+    {
+        await User.update(
+            {
+                status: UserEnum.STATUS_INACTIVE
+            },
+            {
+                where: { id: body.id }
+            }
+        ).then((user) => {
+            res.status(200)
+               .send({
+                    message: 'User deleted successfully',
+                    user   : user,
+                    status : 200,
+                    success: true,
+               });
+        });
+    }
+    else
+    {
+        res.status(400)
+           .send('User ID is required');
+    }
+}
+
+
+export async function updateUser(req:Request, res:Response, next:NextFunction)
+{
+    let body                = req.body;
+    let updateObject:any    = {};
+
+    if(body.first_name)
+        updateObject['first_name']  = body.first_name;
+    if(body.last_name)
+        updateObject['last_name']   = body.last_name;
+    if(body.email)
+        updateObject['email']       = body.email;
+    if(body.mobile)
+        updateObject['mobile']      = body.mobile;
+    if(body.type)
+        updateObject['type']        = body.type;
+    if(body.role)
+        updateObject['role']        = body.role;
+    if(body.department)
+        updateObject['department']  = body.department;
+    if(body.designation)
+        updateObject['designation'] = body.designation;
+    if(body.status)
+        updateObject['status']      = body.status;
+    if(body.getManager)
+        updateObject['manager']     = body.getManager;
+
+
+
+    if(body.id)
+    {
+        await User.update(updateObject,
+            {
+                where: { id: body.id }
+            }
+        ).then((user) => {
+            res.status(200)
+               .send({
+                    message: 'User updated successfully',
+                    user   : user,
+                    status : 200,
+                    success: true,
+               });
+        }).catch((error) => {
+            res.status(500)
+               .send(error);
+        });
+    }
+    else
+    {
+        res.status(400)
+           .send('User ID is required');
+    }
 }
 
 

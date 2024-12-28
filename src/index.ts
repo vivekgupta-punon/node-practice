@@ -1,12 +1,15 @@
 import "reflect-metadata";
 import express from 'express';
-import AppDataSource  from './config/Database';
+// import AppDataSource  from './config/Database';
 import userRouter from './routes/UserRoutes';
 import taskRouter from './routes/TaskRoutes';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import cors from 'cors';
+
+import { sequelizeConnection } from "./config/Database";
+import modelsSync from "./models/modelsSync";
 
 const app   = express();
 const PORT  = 3000;
@@ -24,13 +27,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-
-AppDataSource.initialize().then(() => {
-    console.log('Database connected');
-}).catch((error) => {
-    console.log('Error connecting to database', error);
+// connect to database
+// sequelizeConnection();
+sequelizeConnection.authenticate().then(() => {
+    modelsSync();
+    console.log('Database connection has been established successfully.');
 });
-
 
 app.use('/api/user', userRouter);
 app.use('/api/task', taskRouter);
