@@ -8,7 +8,7 @@ export class TaskEnum
 {
     static LEVEL_LOW     = 1;
     static LEVEL_MEDIUM  = 2;
-    static LEVEL_HIGHT   = 2;
+    static LEVEL_HIGHT   = 3;
 
     static levels = {
         [TaskEnum.LEVEL_LOW]     : "Low",
@@ -19,16 +19,17 @@ export class TaskEnum
     static STATUS_PENDING       = 1;
     static STATUS_IN_PROGRESS   = 2;
     static STATUS_COMPLETED     = 3;
-    static STATUS_TESTED        = 3;
-    static STATUS_CANCELLED     = 4;
-    static STATUS_EXPIRED       = 5;
+    static STATUS_TESTED        = 4;
+    static STATUS_CANCELLED     = 5;
+    static STATUS_EXPIRED       = 6;
 
     static statuses = {
         [TaskEnum.STATUS_PENDING]    : "Pending",
         [TaskEnum.STATUS_IN_PROGRESS]: "In Progress",
         [TaskEnum.STATUS_COMPLETED]  : "Completed",
+        [TaskEnum.STATUS_TESTED]     : "Tested",
         [TaskEnum.STATUS_CANCELLED]  : "Cancelled",
-        [TaskEnum.STATUS_EXPIRED]    : "Backlog"
+        [TaskEnum.STATUS_EXPIRED]    : "Backlog",
     }
 }
 

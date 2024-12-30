@@ -15,7 +15,7 @@ export async function getUsers(req:Request, res:Response, next:NextFunction)
 {
     let conditions  = userSearch(req);
 
-    const users = await User.findAll({
+    await User.findAll({
         where       : conditions,
         attributes  : ['id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'department']
     }).then((users) => {

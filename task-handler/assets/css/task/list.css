@@ -1,27 +1,32 @@
 .pending-task-item
 {
     border:1px solid gray;
-    border-bottom:3px solid red;
+    border-left:4px solid red;
     cursor: move;
 }
 
 .in-progress-task-item
 {
     border:1px solid gray;
-    border-bottom:3px solid orange;
+    border-left:4px solid orange;
     cursor: move;
 }
 
 .completed-task-item
 {
     border:1px solid gray;
-    border-bottom:3px solid green;
+    border-left:4px solid green;
     cursor: move;
 }
 
 .tested-task-item
 {
     /* border:1px solid gray; */
-    border-bottom:3px solid green;
+    border-left:4px solid green;
     cursor: move;
+}
+
+.edit-task
+{
+    cursor: pointer;
 }
