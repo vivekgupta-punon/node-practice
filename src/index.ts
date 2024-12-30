@@ -2,6 +2,7 @@ import "reflect-metadata";
 import express from 'express';
 import userRouter from './routes/UserRoutes';
 import taskRouter from './routes/TaskRoutes';
+import appRouter from './routes/AppRoutes';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
@@ -40,6 +41,7 @@ sequelizeConnection.authenticate().then(() => {
 
 app.use('/api/user', userRouter);
 app.use('/api/task', taskRouter);
+app.use('/api/app', appRouter);
 
 
 // if no route found, return 404

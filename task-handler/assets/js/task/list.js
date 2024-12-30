@@ -97,8 +97,8 @@ async function updateTaskList()
                                     tempTask += `</div>`;
                                 tempTask += `</div>`;
                                 tempTask += `<div class="d-flex justify-content-between">`;
-                                    tempTask += `<span class="badge bg-danger">${deadline}</span>`;
-                                    tempTask += `<span class="badge ${levelClass}">${(value.level).toUpperCase()}</span>`;
+                                    tempTask += `<span class="badge bg-light text-danger">${deadline}</span>`;
+                                    tempTask += `<span class="badge rounded-pill ${levelClass}">${(value.level).toUpperCase()}</span>`;
                                     tempTask += `<span class="badge bg-light text-dark">By: ${value.createdBy.first_name}</span>`;
                                 tempTask += `</div>`;
                                 // tempTask += `<p class="pending-task-content">${value.content}</p>`;
@@ -125,8 +125,8 @@ async function updateTaskList()
                                     tempTask += `</div>`;
                                 tempTask += `</div>`;
                                 tempTask += `<div class="d-flex justify-content-between">`;
-                                    tempTask += `<span class="badge bg-danger">${deadline}</span>`;
-                                    tempTask += `<span class="badge ${levelClass}">${(value.level).toUpperCase()}</span>`;
+                                    tempTask += `<span class="badge bg-light text-danger">${deadline}</span>`;
+                                    tempTask += `<span class="badge rounded-pill ${levelClass}">${(value.level).toUpperCase()}</span>`;
                                     tempTask += `<span class="badge bg-light text-dark">By: ${value.createdBy.first_name}</span>`;
                                 tempTask += `</div>`;
                                 // tempTask += `<p class="pending-task-content">${value.content}</p>`;
@@ -153,8 +153,8 @@ async function updateTaskList()
                                     tempTask += `</div>`;
                                 tempTask += `</div>`;
                                 tempTask += `<div class="d-flex justify-content-between">`;
-                                    tempTask += `<span class="badge bg-danger">${deadline}</span>`;
-                                    tempTask += `<span class="badge ${levelClass}">${(value.level).toUpperCase()}</span>`;
+                                    tempTask += `<span class="badge bg-light text-danger">${deadline}</span>`;
+                                    tempTask += `<span class="badge rounded-pill ${levelClass}">${(value.level).toUpperCase()}</span>`;
                                     tempTask += `<span class="badge bg-light text-dark">By: ${value.createdBy.first_name}</span>`;
                                 tempTask += `</div>`;
                                 // tempTask += `<p class="pending-task-content">${value.content}</p>`;
@@ -181,8 +181,8 @@ async function updateTaskList()
                                     tempTask += `</div>`;
                                 tempTask += `</div>`;
                                 tempTask += `<div class="d-flex justify-content-between">`;
-                                    tempTask += `<span class="badge bg-danger">${deadline}</span>`;
-                                    tempTask += `<span class="badge ${levelClass}">${(value.level).toUpperCase()}</span>`;
+                                    tempTask += `<span class="badge bg-light text-danger">${deadline}</span>`;
+                                    tempTask += `<span class="badge rounded-pill ${levelClass}">${(value.level).toUpperCase()}</span>`;
                                     tempTask += `<span class="badge bg-light text-dark">By: ${value.createdBy.first_name}</span>`;
                                 tempTask += `</div>`;
                                 // tempTask += `<p class="pending-task-content">${value.content}</p>`;

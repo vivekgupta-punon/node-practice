@@ -17,8 +17,28 @@ export async function getUsers(req:Request, res:Response, next:NextFunction)
 
     await User.findAll({
         where       : conditions,
-        attributes  : ['id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'department']
+        // attributes  : ['id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'department']
+        attributes  : {
+            exclude     : ['password']
+        }
     }).then((users) => {
+
+        for(let user of users as any)
+        {
+            if(user.role)
+            {
+                user.role = UserEnum.roles[user.role];
+            }
+            if(user.department)
+            {
+                user.department = UserEnum.departments[user.department];
+            }
+            if(user.status)
+            {
+                user.status = UserEnum.statuses[user.status];
+            }
+        }
+
         res.status(200)
            .send(users);
     }).catch((error) => {
