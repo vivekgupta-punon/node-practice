@@ -26,7 +26,8 @@ export const sequelizeConnection = new Sequelize(
     {
         host        : process.env.DB_HOST || "localhost",
         dialect     : "mysql",
-        port        : 3306
+        port        : 3306,
+        logging     : false
     }
 );
 

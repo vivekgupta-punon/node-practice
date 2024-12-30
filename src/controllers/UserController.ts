@@ -7,13 +7,16 @@ import Authentication from '../models/AuthModel';
 // import AppDataSource from '../config/Database';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken } from './AuthController';
+import userSearch from '../search/userSearch';
 
 
 
 export async function getUsers(req:Request, res:Response, next:NextFunction)
 {
+    let conditions  = userSearch(req);
+
     const users = await User.findAll({
-        // include     : [Task],
+        where       : conditions,
         attributes  : ['id', 'first_name', 'last_name', 'email', 'mobile', 'role', 'department']
     }).then((users) => {
         res.status(200)
@@ -250,8 +253,6 @@ export async function createUser(req:Request, res:Response)
             res.status(500)
                .send(error);
         });
-
-        console.log(newUser);
     }
     else
     {
