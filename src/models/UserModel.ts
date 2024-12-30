@@ -1,6 +1,8 @@
 import { sequelizeConnection } from "../config/Database";
 import { DataTypes } from "sequelize";
 import Task from "./TaskModel";
+import { AssociableModel } from "../interfaces/sequelizeInterface";
+
 
 export class UserEnum
 {
@@ -126,11 +128,10 @@ const User = sequelizeConnection.define("users", {
     timestamps  : true,
     createdAt   : "created_at",
     updatedAt   : "updated_at"
-});
+}) as AssociableModel;
 
-User.hasMany(Task, {
-    foreignKey: 'user_id',
-    as: 'tasks'
-});
+User.associate = () => {
+    User.hasMany(Task, { foreignKey: 'user_id', as: 'tasks' });
+};
 
 export default User;

@@ -1,12 +1,13 @@
 import "reflect-metadata";
 import express from 'express';
-// import AppDataSource  from './config/Database';
 import userRouter from './routes/UserRoutes';
 import taskRouter from './routes/TaskRoutes';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import cors from 'cors';
+import User from './models/UserModel';
+import Task from './models/TaskModel';
 
 import { sequelizeConnection } from "./config/Database";
 import modelsSync from "./models/modelsSync";
@@ -14,13 +15,7 @@ import modelsSync from "./models/modelsSync";
 const app   = express();
 const PORT  = 3000;
 
-app.use(cors({
-    // origin          : 'http://localhost:4200',
-    credentials     : true,
-    // methods         : ['GET', 'POST', 'PUT', 'DELETE'],
-    // allowedHeaders  : ['Content-Type', 'Authorization']
-}));
-
+app.use(cors({credentials : true}));
 app.use(compression());
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -28,11 +23,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
 // connect to database
-// sequelizeConnection();
 sequelizeConnection.authenticate().then(() => {
-    modelsSync();
-    console.log('Database connection has been established successfully.');
+    sequelizeConnection.sync({ force: false }).then(() => {
+        console.log("Database synchronized");
+    });
+
+    const models = { User, Task };
+    Object.values(models).forEach((model) => {
+        if(model.associate)
+        {
+            model.associate(models);
+        }
+    });
 });
+
 
 app.use('/api/user', userRouter);
 app.use('/api/task', taskRouter);

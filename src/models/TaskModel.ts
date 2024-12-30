@@ -1,6 +1,7 @@
 import { sequelizeConnection } from "../config/Database";
 import { DataTypes } from "sequelize";
 import User from "./UserModel";
+import { AssociableModel } from "../interfaces/sequelizeInterface";
 
 
 export class TaskEnum
@@ -46,10 +47,6 @@ const Task = sequelizeConnection.define('tasks', {
                 },
     user_id     : {
                     type: DataTypes.INTEGER,
-                    references: {
-                        model: User,
-                        key: 'id'
-                    }
                 },
     status      : {
                     type: DataTypes.INTEGER,
@@ -81,7 +78,14 @@ const Task = sequelizeConnection.define('tasks', {
     timestamps  : true,
     createdAt   : 'created_at',
     updatedAt   : 'updated_at'
-});
+}) as AssociableModel;
+
+
+Task.associate = () => {
+    Task.belongsTo(User, { foreignKey: 'user_id', as: 'assignedTo' });
+    Task.belongsTo(User, { foreignKey: 'created_by', as: 'createdBy' });
+    Task.belongsTo(User, { foreignKey: 'updated_by', as: 'updatedBy' });
+};
 
 
 export default Task;
