@@ -8,6 +8,8 @@ export default function userSearch(req:Request)
     const currentUser   = req.body.user;
     let where:any       = {};
 
+    where[Op.and] = {status: {[Op.in]: [UserEnum.STATUS_ACTIVE]}};
+
     if(req.query.role)
     {
         if(currentUser.role == UserEnum.ROLE_USER)
@@ -30,6 +32,43 @@ export default function userSearch(req:Request)
             {last_name: {[Op.substring]: req.query.name}}
         ];
     }
+
+    if(req.query.email)
+    {
+        where[Op.and] = [
+            {email: {[Op.substring]: req.query.email}}
+        ];
+    }
+
+    if(req.query.mobile)
+    {
+        where[Op.and] = [
+            {mobile: {[Op.substring]: req.query.mobile}}
+        ];
+    }
+
+    if(req.query.department)
+    {
+        where[Op.and] = [
+            {department: {[Op.eq]: req.query.department}}
+        ];
+    }
+
+    if(req.query.status)
+    {
+        where[Op.and] = [
+            {status: {[Op.eq]: req.query.status}}
+        ];
+    }
+
+    if(req.query.manager)
+    {
+        where[Op.and] = [
+            {manager: {[Op.eq]: req.query.manager}}
+        ];
+    }
+
+    
 
 
     return where;

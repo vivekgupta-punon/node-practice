@@ -11,7 +11,6 @@ import User from './models/UserModel';
 import Task from './models/TaskModel';
 
 import { sequelizeConnection } from "./config/Database";
-import modelsSync from "./models/modelsSync";
 
 const app   = express();
 const PORT  = 3000;

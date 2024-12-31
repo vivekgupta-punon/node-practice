@@ -1,10 +1,8 @@
 import { NextFunction, Request, Response, CookieOptions } from 'express-serve-static-core';
-// import { CreateUserInterface } from '../interfaces/UserInterfaces';
 import { CreateUserInterface, UserInterface } from '../interfaces/UserInterfaces';
 import User, { UserEnum } from '../models/UserModel';
 import Task from '../models/TaskModel';
 import Authentication from '../models/AuthModel';
-// import AppDataSource from '../config/Database';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken } from './AuthController';
 import userSearch from '../search/userSearch';
@@ -61,6 +59,9 @@ export async function getUserById(req:Request, res:Response, next:NextFunction)
     await User.findOne({
         where: {
             id: parseInt(req.params.id)
+        },
+        attributes: {
+            exclude: ['password']
         }
     }).then((user) => {
         if(user)
@@ -81,6 +82,23 @@ export async function getUserById(req:Request, res:Response, next:NextFunction)
     });
 }
 
+export async function getManagers(req:Request, res:Response, next:NextFunction)
+{
+    await User.findAll({
+        where: {
+            role: UserEnum.ROLE_MANAGER
+        },
+        attributes: {
+            exclude: ['password']
+        }
+    }).then((managers) => {
+        res.status(200)
+           .send(managers);
+    }).catch((error) => {
+        res.status(500)
+           .send(error);
+    });
+}
 
 export async function loginUser(req:Request, res:Response):Promise<any>
 {
@@ -174,17 +192,16 @@ export async function loginUser(req:Request, res:Response):Promise<any>
 
 export async function logoutUser(req:Request, res:Response)
 {
-    if(!req.body.id)
+    if(!req.body.user.id)
     {
         res.status(400)
            .send('User ID is required');
         return;
     }
 
-
     let rowDeleted = await Authentication.destroy({
         where: {
-            user_id: req.body.id
+            user_id: req.body.user.id
         }
     });
 
@@ -331,20 +348,19 @@ export async function updateUser(req:Request, res:Response, next:NextFunction)
     if(body.email)
         updateObject['email']       = body.email;
     if(body.mobile)
-        updateObject['mobile']      = body.mobile;
+        updateObject['mobile']      = parseInt(body.mobile);
     if(body.type)
-        updateObject['type']        = body.type;
+        updateObject['type']        = parseInt(body.type);
     if(body.role)
-        updateObject['role']        = body.role;
+        updateObject['role']        = parseInt(body.role);
     if(body.department)
-        updateObject['department']  = body.department;
+        updateObject['department']  = parseInt(body.department);
     if(body.designation)
         updateObject['designation'] = body.designation;
-    if(body.status)
-        updateObject['status']      = body.status;
-    if(body.getManager)
-        updateObject['manager']     = body.getManager;
-
+    if(body.status || body.status == UserEnum.STATUS_INACTIVE)
+        updateObject['status']      = parseInt(body.status);
+    if(body.manager)
+        updateObject['manager']     = parseInt(body.manager);
 
 
     if(body.id)
@@ -354,6 +370,7 @@ export async function updateUser(req:Request, res:Response, next:NextFunction)
                 where: { id: body.id }
             }
         ).then((user) => {
+            console.log(user);
             res.status(200)
                .send({
                     message: 'User updated successfully',

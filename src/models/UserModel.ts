@@ -80,8 +80,8 @@ const User = sequelizeConnection.define("users", {
                     unique          : true
                 },
     mobile      : {
-                    type            : DataTypes.INTEGER,
-                    allowNull       : true,
+                    type            : DataTypes.STRING,
+                    allowNull       : false,
                     unique          : true
                 },
     password    : {
