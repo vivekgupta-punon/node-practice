@@ -222,3 +222,50 @@ export async function createTask(req:Request, res:Response)
            });
     }
 }
+
+export async function deleteTask(req:Request, res:Response)
+{
+    if(!req.body.id)
+    {
+        res.status(400)
+           .send({
+               message: 'Task ID is required',
+               status : 400,
+               success: false
+           });
+        return;
+    }
+
+    try
+    {
+        const task = await Task.destroy({
+            where: {
+                id: req.body.id
+            }
+        }).then((task) => {
+            res.status(200)
+               .send({
+                   message: 'Task deleted successfully',
+                   status : 200,
+                   success: true,
+                   task   : task
+               });
+        }).catch((error) => {    
+            res.status(500)
+                .send({
+                    message: 'Something went wrong',
+                    status : 500,
+                    success: false
+                });
+        });
+    }
+    catch(error)
+    {
+        res.status(500)
+           .send({
+               message: 'Something went wrong',
+               status : 500,
+               success: false
+           });
+    }
+}

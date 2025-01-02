@@ -87,7 +87,7 @@ async function updateTaskList()
                         {
                             deadline    = new Date(value.deadline).toLocaleDateString();
                             levelClass  = value.level == 'low' ? ('bg-secondary') : (value.level == 'medium' ? 'bg-info' : 'bg-danger'); 
-                            tempTask += `<div class="pending-task-item alert alert-light" style="padding:0;">`;
+                            tempTask += `<div class="pending-task-item task-items alert alert-light" style="padding:0;">`;
                                 tempTask += `<div class="d-flex">`;
                                     tempTask += `<div class="p-2 w-100">`;
                                         tempTask += `<h5 class="pending-task-title">${value.title}</h5>`;
@@ -105,6 +105,7 @@ async function updateTaskList()
                             tempTask += `</div>`;
                         }
                         $('.pending-task-container').html(tempTask);
+                        $( ".pending-task-container").sortable();
                     }
                     if(response.in_progress)
                     {
@@ -115,7 +116,7 @@ async function updateTaskList()
                         {
                             deadline = new Date(value.deadline).toLocaleDateString();
                             levelClass  = value.level == 'low' ? ('bg-secondary') : (value.level == 'medium' ? 'bg-info' : 'bg-danger');
-                                tempTask += `<div class="in-progress-task-item alert alert-light" style="padding:0">`;
+                                tempTask += `<div class="in-progress-task-item task-items alert alert-light" style="padding:0">`;
                                     tempTask += `<div class="d-flex">`;
                                     tempTask += `<div class="p-2 w-100">`;
                                         tempTask += `<h5 class="pending-task-title">${value.title}</h5>`;
@@ -133,6 +134,7 @@ async function updateTaskList()
                             tempTask += `</div>`;
                         }
                         $('.in-progress-task-container').html(tempTask);
+                        $( ".in-progress-task-container").sortable();
                     }
                     if(response.completed)
                     {
@@ -143,7 +145,7 @@ async function updateTaskList()
                         {
                             deadline = new Date(value.deadline).toLocaleDateString();
                             levelClass  = value.level == 'low' ? ('bg-secondary') : (value.level == 'medium' ? 'bg-info' : 'bg-danger');
-                                tempTask += `<div class="completed-task-item alert alert-light" style="padding:0">`;
+                                tempTask += `<div class="completed-task-item task-items alert alert-light" style="padding:0">`;
                                     tempTask += `<div class="d-flex">`;
                                     tempTask += `<div class="p-2 w-100">`;
                                         tempTask += `<h5 class="pending-task-title">${value.title}</h5>`;
@@ -161,6 +163,7 @@ async function updateTaskList()
                             tempTask += `</div>`;
                         }
                         $('.completed-task-container').html(tempTask);
+                        $( ".completed-task-container").sortable();
                     }
                     if(response.tested)
                     {
@@ -171,7 +174,7 @@ async function updateTaskList()
                         {
                             deadline = new Date(value.deadline).toLocaleDateString();
                             levelClass  = value.level == 'low' ? ('bg-secondary') : (value.level == 'medium' ? 'bg-info' : 'bg-danger');
-                            tempTask += `<div class="tested-task-item alert alert-success" style="padding:0">`;
+                            tempTask += `<div class="tested-task-item task-items alert alert-success" style="padding:0">`;
                                 tempTask += `<div class="d-flex">`;
                                     tempTask += `<div class="p-2 w-100">`;
                                         tempTask += `<h5 class="pending-task-title">${value.title}</h5>`;
@@ -189,7 +192,17 @@ async function updateTaskList()
                             tempTask += `</div>`;
                         }
                         $('.tested-task-container').html(tempTask);
+                        $( ".tested-task-container").sortable();
                     }
+
+                    $('.task-containers').sortable({
+                        // connectWith: '.menu-gategories',
+                        connectWith: '.task-containers',
+                        // update: function(event, ui) {
+                        //     var order = $(this).sortable('toArray');
+                        //     console.log(order);
+                        // }
+                    }).disableSelection();
 
 
                     $('.edit-task').click(function(){
@@ -257,10 +270,38 @@ function showUpdateForm(taskID)
 
 
 $(function(){
-    $( ".pending-task-container" ).sortable();
-    $( ".in-progress-task-container" ).sortable();
-    $( ".completed-task-container" ).sortable();
-    $( ".tested-task-container" ).sortable();
+
+
+    
+    updateTaskCreateForm();
+    updateUserSelections();
+    updateTaskList();
+
+
+    // $('.task-containers').sortable({
+    //     // connectWith: '.menu-gategories',
+    //     connectWith: '.task-containers',
+    //     // update: function(event, ui) {
+    //     //     var order = $(this).sortable('toArray');
+    //     //     console.log(order);
+    //     // }
+    // }).disableSelection();
+
+
+    // $('.task-items').sortable({
+    //     connectWith: '.task-items',
+    //     tolerance: 'pointer',
+    //     helper: 'clone',
+    //     placeholder: 'ui-state-highlight',
+    //     forcePlaceholderSize: true,
+    //     scroll: true,
+    //     scrollSensitivity: 100,
+    //     scrollSpeed: 100,
+    //     start: function(event, ui) {
+    //         ui.item.addClass('dragging');
+    //     }
+    // });
+
 
     var newTaskQuill = new Quill('#new-task-form-content', {
         theme: 'snow'
@@ -269,12 +310,6 @@ $(function(){
     var editTaskQuill = new Quill('#edit-task-form-content', {
         theme: 'snow'
     });
-
-
-    
-    updateTaskCreateForm();
-    updateUserSelections();
-    updateTaskList();
 
 
     $('#new-task-form-submit').click(function(e){
