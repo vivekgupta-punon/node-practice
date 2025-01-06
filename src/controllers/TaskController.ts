@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import Task, { TaskEnum } from '../models/TaskModel';
 import User from '../models/UserModel';
 import { format } from 'date-fns';
-// import { In } from 'typeorm';
+import taskSearch from '../search/taskSearch';
 
 
 
@@ -19,7 +19,11 @@ export function getTaskEnums(req:Request, res:Response)
 
 export async function getTasks(req:Request, res:Response)
 {
+
+    let conditions  = taskSearch(req);
+
     const tasks = await Task.findAll({
+        where: conditions,
         include: [
             { model: User, as: 'assignedTo', attributes: ['id', 'first_name', 'last_name'] },
             { model: User, as: 'createdBy', attributes: ['id', 'first_name', 'last_name'] },
